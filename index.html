@@ -1,114 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Jan Agent</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #1e1e1e;
-            color: #f0f0f0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-        }
-        #chatbox {
-            width: 90%;
-            max-width: 600px;
-            height: 70%;
-            border: 1px solid #444;
-            padding: 10px;
-            overflow-y: scroll;
-            margin-top: 20px;
-            background: #2b2b2b;
-        }
-        #inputBox {
-            width: 90%;
-            max-width: 600px;
-            display: flex;
-            margin-top: 10px;
-        }
-        #msgInput {
-            flex: 1;
-            padding: 10px;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px 0 0 4px;
-        }
-        #sendBtn {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            background: #4caf50;
-            color: white;
-            cursor: pointer;
-            border-radius: 0 4px 4px 0;
-        }
-        .message {
-            margin: 5px 0;
-        }
-        .user {
-            color: #00bfff;
-        }
-        .agent {
-            color: #ffcc00;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jan Agent</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #121212;
+    color: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    color: #ffcc00;
+  }
+  #chat-box {
+    width: 100%;
+    max-width: 500px;
+    border: 1px solid #333;
+    padding: 10px;
+    border-radius: 10px;
+    background: #1e1e1e;
+    flex-grow: 1;
+    overflow-y: auto;
+    height: 400px;
+    margin-bottom: 10px;
+  }
+  .message {
+    margin: 5px 0;
+    padding: 5px 10px;
+    border-radius: 8px;
+  }
+  .user { background: #007bff; text-align: right; }
+  .agent { background: #ffcc00; color: #000; text-align: left; }
+  #input-area {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+  }
+  #message-input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px 0 0 8px;
+    border: none;
+    outline: none;
+  }
+  #send-btn {
+    padding: 10px 20px;
+    border: none;
+    background: #ffcc00;
+    color: #000;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+  }
+  #send-btn:hover {
+    background: #e6b800;
+  }
+</style>
 </head>
 <body>
-    <h1>Jan Agent</h1>
-    <div id="chatbox"></div>
-    <div id="inputBox">
-        <input type="text" id="msgInput" placeholder="Type your message...">
-        <button id="sendBtn">Send</button>
-    </div>
+<h1>Jan Agent</h1>
+<div id="chat-box"></div>
+<div id="input-area">
+  <input type="text" id="message-input" placeholder="Type your message...">
+  <button id="send-btn">Send</button>
+</div>
 
-    <script>
-        const chatbox = document.getElementById("chatbox");
-        const input = document.getElementById("msgInput");
-        const sendBtn = document.getElementById("sendBtn");
+<script>
+const chatBox = document.getElementById("chat-box");
+const input = document.getElementById("message-input");
+const sendBtn = document.getElementById("send-btn");
 
-        // Change this to your Render backend URL
-        const BACKEND_URL = "https://jan-agent-backend.onrender.com/chat";
+// Change this to your Render backend URL
+const BACKEND_URL = "https://jan-agent-backend.onrender.com/chat";
 
-        function appendMessage(sender, text) {
-            const div = document.createElement("div");
-            div.classList.add("message", sender === "You" ? "user" : "agent");
-            div.textContent = `${sender}: ${text}`;
-            chatbox.appendChild(div);
-            chatbox.scrollTop = chatbox.scrollHeight;
-        }
+function appendMessage(text, className) {
+  const div = document.createElement("div");
+  div.className = `message ${className}`;
+  div.textContent = text;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
 
-        async function sendMessage() {
-            const msg = input.value.trim();
-            if (!msg) return;
-            appendMessage("You", msg);
-            input.value = "";
-            
-            try {
-                const res = await fetch(BACKEND_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: msg, mode: "chat" })
-                });
+async function sendMessage() {
+  const message = input.value.trim();
+  if (!message) return;
+  appendMessage(`You: ${message}`, "user");
+  input.value = "";
+  
+  appendMessage("Jan Agent: ...thinking", "agent");
 
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
-                appendMessage("Jan Agent", data.response);
-            } catch (err) {
-                appendMessage("Jan Agent", "❌ Error connecting to backend.");
-                console.error(err);
-            }
-        }
+  try {
+    const res = await fetch(BACKEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: message, mode: "chat" })
+    });
 
-        sendBtn.addEventListener("click", sendMessage);
-        input.addEventListener("keypress", e => {
-            if (e.key === "Enter") sendMessage();
-        });
-    </script>
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    // Remove the "thinking" message
+    chatBox.lastChild.remove();
+    appendMessage(`Jan Agent: ${data.response}`, "agent");
+
+  } catch (err) {
+    chatBox.lastChild.remove();
+    appendMessage(`Jan Agent: ❌ Error connecting to backend.`, "agent");
+    console.error(err);
+  }
+}
+
+sendBtn.addEventListener("click", sendMessage);
+input.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
+</script>
 </body>
 </html>
