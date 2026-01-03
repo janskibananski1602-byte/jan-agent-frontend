@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jan Agent Online</title>
+    <style>
+        body { font-family: Arial; margin: 2em; }
+        #response { white-space: pre-wrap; margin-top: 1em; }
+    </style>
+</head>
+<body>
+<h1>Jan Agent</h1>
+
+<input id="msg" placeholder="Type your message" size="50">
+<select id="mode">
+    <option value="chat">Chat</option>
+    <option value="write">Write</option>
+    <option value="code">Code</option>
+</select>
+<button onclick="sendMessage()">Send</button>
+
+<pre id="response"></pre>
+
+<script>
+async function sendMessage() {
+    const message = document.getElementById("msg").value;
+    const mode = document.getElementById("mode").value;
+
+    const res = await fetch("https://jan-agent-backend.onrender.com", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({message, mode})
+    });
+
+    const data = await res.json();
+    document.getElementById("response").textContent = 
+        "Response:\n" + data.response + "\n\nLogs:\n" + data.logs.join("\n");
+}
+</script>
+
+</body>
+</html>
