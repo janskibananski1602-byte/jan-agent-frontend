@@ -1,151 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Jan Agent</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f0f0f;
-      color: #eaeaea;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 600px;
-      background: #1a1a1a;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-
-    .chat {
-      background: #111;
-      padding: 10px;
-      height: 300px;
-      overflow-y: auto;
-      border-radius: 5px;
-      margin-bottom: 10px;
-      white-space: pre-wrap;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 5px;
-    }
-
-    input, select, button {
-      padding: 10px;
-      border-radius: 5px;
-      border: none;
-      outline: none;
-    }
-
-    input {
-      flex: 1;
-    }
-
-    button {
-      background: #4caf50;
-      color: black;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      background: #777;
-    }
-
-    .status {
-      text-align: center;
-      font-size: 12px;
-      opacity: 0.7;
-      margin-top: 5px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Jan Agent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e1e;
+            color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        #chatbox {
+            width: 90%;
+            max-width: 600px;
+            height: 70%;
+            border: 1px solid #444;
+            padding: 10px;
+            overflow-y: scroll;
+            margin-top: 20px;
+            background: #2b2b2b;
+        }
+        #inputBox {
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            margin-top: 10px;
+        }
+        #msgInput {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px 0 0 4px;
+        }
+        #sendBtn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background: #4caf50;
+            color: white;
+            cursor: pointer;
+            border-radius: 0 4px 4px 0;
+        }
+        .message {
+            margin: 5px 0;
+        }
+        .user {
+            color: #00bfff;
+        }
+        .agent {
+            color: #ffcc00;
+        }
+    </style>
 </head>
-
 <body>
-  <div class="app">
     <h1>Jan Agent</h1>
-
-    <div id="chat" class="chat">Jan Agent is online.</div>
-
-    <div class="input-row">
-      <input id="message" placeholder="Type your message..." />
-      <select id="mode">
-        <option value="chat">Chat</option>
-        <option value="write">Write</option>
-        <option value="code">Code</option>
-      </select>
-      <button id="sendBtn" onclick="sendMessage()">Send</button>
+    <div id="chatbox"></div>
+    <div id="inputBox">
+        <input type="text" id="msgInput" placeholder="Type your message...">
+        <button id="sendBtn">Send</button>
     </div>
 
-    <div id="status" class="status">Idle</div>
-  </div>
+    <script>
+        const chatbox = document.getElementById("chatbox");
+        const input = document.getElementById("msgInput");
+        const sendBtn = document.getElementById("sendBtn");
 
-  <script>
-    const BACKEND_URL = "https://jan-agent-backend.onrender.com/chat";
+        // Change this to your Render backend URL
+        const BACKEND_URL = "https://jan-agent-backend.onrender.com/chat";
 
-    const chatBox = document.getElementById("chat");
-    const statusText = document.getElementById("status");
-    const sendBtn = document.getElementById("sendBtn");
-
-    function addMessage(text) {
-      chatBox.textContent += "\n\n" + text;
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const message = document.getElementById("message").value.trim();
-      const mode = document.getElementById("mode").value;
-
-      if (!message) return;
-
-      document.getElementById("message").value = "";
-      sendBtn.disabled = true;
-      statusText.textContent = "Jan Agent is thinking...";
-
-      addMessage("You: " + message);
-
-      try {
-        const res = await fetch(BACKEND_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message: message,
-            mode: mode
-          })
-        });
-
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
+        function appendMessage(sender, text) {
+            const div = document.createElement("div");
+            div.classList.add("message", sender === "You" ? "user" : "agent");
+            div.textContent = `${sender}: ${text}`;
+            chatbox.appendChild(div);
+            chatbox.scrollTop = chatbox.scrollHeight;
         }
 
-        const data = await res.json();
-        addMessage("Jan Agent: " + data.response);
-        statusText.textContent = "Done";
-      } catch (err) {
-        console.error(err);
-        addMessage("Jan Agent: ❌ Error connecting to backend.");
-        statusText.textContent = "Error";
-      }
+        async function sendMessage() {
+            const msg = input.value.trim();
+            if (!msg) return;
+            appendMessage("You", msg);
+            input.value = "";
+            
+            try {
+                const res = await fetch(BACKEND_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: msg, mode: "chat" })
+                });
 
-      sendBtn.disabled = false;
-    }
-  </script>
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                appendMessage("Jan Agent", data.response);
+            } catch (err) {
+                appendMessage("Jan Agent", "❌ Error connecting to backend.");
+                console.error(err);
+            }
+        }
+
+        sendBtn.addEventListener("click", sendMessage);
+        input.addEventListener("keypress", e => {
+            if (e.key === "Enter") sendMessage();
+        });
+    </script>
 </body>
 </html>
