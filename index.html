@@ -1,41 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Jan Agent Online</title>
+    <meta charset="UTF-8">
+    <title>Jan Agent</title>
     <style>
-        body { font-family: Arial; margin: 2em; }
-        #response { white-space: pre-wrap; margin-top: 1em; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e1e;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #chatbox {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            background: #2e2e2e;
+            overflow-y: scroll;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        #chatbox p {
+            margin: 5px 0;
+        }
+        input, select, button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+            outline: none;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        select {
+            background-color: #2e2e2e;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
-<h1>Jan Agent</h1>
+    <h1>Jan Agent</h1>
+    <div id="chatbox"></div>
+    <input type="text" id="userInput" placeholder="Type your message..." />
+    <select id="modeSelect">
+        <option value="chat">Chat</option>
+        <option value="write">Write</option>
+        <option value="code">Code</option>
+    </select>
+    <button onclick="sendMessage()">Send</button>
 
-<input id="msg" placeholder="Type your message" size="50">
-<select id="mode">
-    <option value="chat">Chat</option>
-    <option value="write">Write</option>
-    <option value="code">Code</option>
-</select>
-<button onclick="sendMessage()">Send</button>
+    <script>
+        const backendURL = "https://jan-agent-backend.onrender.com/chat";
 
-<pre id="response"></pre>
+        function addMessage(text, sender="user") {
+            const chatbox = document.getElementById("chatbox");
+            const p = document.createElement("p");
+            p.innerHTML = `<strong>${sender}:</strong> ${text}`;
+            chatbox.appendChild(p);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
 
-<script>
-async function sendMessage() {
-    const message = document.getElementById("msg").value;
-    const mode = document.getElementById("mode").value;
+        async function sendMessage() {
+            const input = document.getElementById("userInput");
+            const mode = document.getElementById("modeSelect").value;
+            const message = input.value.trim();
+            if (!message) return;
 
-    const res = await fetch("https://jan-agent-backend.onrender.com", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({message, mode})
-    });
+            addMessage(message, "You");
+            input.value = "";
 
-    const data = await res.json();
-    document.getElementById("response").textContent = 
-        "Response:\n" + data.response + "\n\nLogs:\n" + data.logs.join("\n");
-}
-</script>
+            try {
+                const response = await fetch(backendURL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ message, mode })
+                });
+                const data = await response.json();
 
+                if (data.response) {
+                    addMessage(data.response, "Jan Agent");
+                } else {
+                    addMessage("No response from backend.", "Jan Agent");
+                }
+
+                // Optional: show logs
+                if (data.logs) {
+                    data.logs.forEach(log => addMessage(log, "Log"));
+                }
+            } catch (error) {
+                console.error(error);
+                addMessage("Error connecting to backend.", "Jan Agent");
+            }
+        }
+    </script>
 </body>
 </html>
