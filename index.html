@@ -1,128 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jan Agent</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #121212;
-    color: #f5f5f5;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 100vh;
-    margin: 0;
-    padding: 20px;
-  }
-  h1 {
-    color: #ffcc00;
-  }
-  #chat-box {
-    width: 100%;
-    max-width: 500px;
-    border: 1px solid #333;
-    padding: 10px;
-    border-radius: 10px;
-    background: #1e1e1e;
-    flex-grow: 1;
-    overflow-y: auto;
-    height: 400px;
-    margin-bottom: 10px;
-  }
-  .message {
-    margin: 5px 0;
-    padding: 5px 10px;
-    border-radius: 8px;
-  }
-  .user { background: #007bff; text-align: right; }
-  .agent { background: #ffcc00; color: #000; text-align: left; }
-  #input-area {
-    width: 100%;
-    max-width: 500px;
-    display: flex;
-  }
-  #message-input {
-    flex: 1;
-    padding: 10px;
-    border-radius: 8px 0 0 8px;
-    border: none;
-    outline: none;
-  }
-  #send-btn {
-    padding: 10px 20px;
-    border: none;
-    background: #ffcc00;
-    color: #000;
-    border-radius: 0 8px 8px 0;
-    cursor: pointer;
-  }
-  #send-btn:hover {
-    background: #e6b800;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jan Agent (GROQ)</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #1e1e1e; color: #f0f0f0; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+    header { background: #333; padding: 1rem; text-align: center; font-size: 1.5rem; }
+    main { flex: 1; display: flex; flex-direction: column; padding: 1rem; overflow-y: auto; }
+    #chat { flex: 1; overflow-y: auto; margin-bottom: 1rem; }
+    .message { margin: 0.5rem 0; }
+    .user { color: #4caf50; }
+    .agent { color: #03a9f4; }
+    footer { display: flex; padding: 1rem; background: #333; }
+    input[type="text"] { flex: 1; padding: 0.5rem; font-size: 1rem; border: none; border-radius: 5px; }
+    button { padding: 0.5rem 1rem; margin-left: 0.5rem; font-size: 1rem; border: none; border-radius: 5px; background: #4caf50; color: white; cursor: pointer; }
+    button:disabled { background: #777; cursor: not-allowed; }
+  </style>
 </head>
 <body>
-<h1>Jan Agent</h1>
-<div id="chat-box"></div>
-<div id="input-area">
-  <input type="text" id="message-input" placeholder="Type your message...">
-  <button id="send-btn">Send</button>
-</div>
+
+<header>Jan Agent (GROQ)</header>
+
+<main>
+  <div id="chat"></div>
+</main>
+
+<footer>
+  <input type="text" id="message" placeholder="Type your message...">
+  <button id="sendBtn">Send</button>
+</footer>
 
 <script>
-const chatBox = document.getElementById("chat-box");
-const input = document.getElementById("message-input");
-const sendBtn = document.getElementById("send-btn");
+const chatBox = document.getElementById('chat');
+const input = document.getElementById('message');
+const sendBtn = document.getElementById('sendBtn');
 
-// Change this to your Render backend URL
-const BACKEND_URL = "https://jan-agent-backend.onrender.com/chat";
+// Your Render backend URL
+const BACKEND_URL = 'https://jan-agent-backend.onrender.com/chat';
 
-function appendMessage(text, className) {
-  const div = document.createElement("div");
-  div.className = `message ${className}`;
-  div.textContent = text;
+// Add a message to chat box
+function addMessage(text, sender) {
+  const div = document.createElement('div');
+  div.classList.add('message', sender);
+  div.textContent = `${sender === 'user' ? 'You' : 'Jan Agent'}: ${text}`;
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// Send message to backend
 async function sendMessage() {
-  const message = input.value.trim();
-  if (!message) return;
-  appendMessage(`You: ${message}`, "user");
-  input.value = "";
-  
-  appendMessage("Jan Agent: ...thinking", "agent");
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  addMessage(msg, 'user');
+  input.value = '';
+  sendBtn.disabled = true;
 
   try {
-    const res = await fetch(BACKEND_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: message, mode: "chat" })
+    const response = await fetch(BACKEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, mode: 'chat' })
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+    if (!response.ok) {
+      addMessage(`❌ Error connecting to AI backend (${response.status})`, 'agent');
+    } else {
+      const data = await response.json();
+      addMessage(data.response || '❌ Error: no response', 'agent');
     }
-
-    const data = await res.json();
-    // Remove the "thinking" message
-    chatBox.lastChild.remove();
-    appendMessage(`Jan Agent: ${data.response}`, "agent");
-
   } catch (err) {
-    chatBox.lastChild.remove();
-    appendMessage(`Jan Agent: ❌ Error connecting to backend.`, "agent");
-    console.error(err);
+    addMessage(`❌ Error: ${err.message}`, 'agent');
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
   }
 }
 
-sendBtn.addEventListener("click", sendMessage);
-input.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") sendMessage();
+sendBtn.addEventListener('click', sendMessage);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
 });
 </script>
+
 </body>
 </html>
