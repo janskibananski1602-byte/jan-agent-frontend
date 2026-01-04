@@ -86,6 +86,8 @@
         const chatBox = document.getElementById('chatBox');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
+        
+        let conversationHistory = [];
 
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
@@ -96,6 +98,7 @@
             if (!message) return;
 
             addMessage(message, 'user');
+            conversationHistory.push({ role: 'user', content: message });
             messageInput.value = '';
             sendBtn.disabled = true;
 
@@ -103,11 +106,13 @@
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
+                    body: JSON.stringify({ messages: conversationHistory })
                 });
 
                 const data = await response.json();
-                addMessage(data.response || data.error, 'ai');
+                const aiResponse = data.response || data.error;
+                addMessage(aiResponse, 'ai');
+                conversationHistory.push({ role: 'assistant', content: aiResponse });
             } catch (error) {
                 addMessage('Error: ' + error.message, 'ai');
             } finally {
