@@ -17,6 +17,11 @@ html
             text-align: center;
             margin-bottom: 20px;
         }
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 10px;
+        }
         h1 {
             font-size: 24px;
             color: #333;
@@ -24,6 +29,21 @@ html
         .version {
             font-size: 12px;
             color: #666;
+        }
+        .system-prompt {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .system-prompt textarea {
+            width: 100%;
+            height: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 13px;
+            resize: vertical;
         }
         .chat-list {
             background: white;
@@ -86,8 +106,15 @@ html
 </head>
 <body>
     <div class="header">
+        <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 30 L20 70 Q20 85 35 85 L50 85 L50 15 Q50 15 50 15 L35 15 Q20 15 20 30 Z" fill="#4a5568"/>
+        </svg>
         <h1>Jan Agent Alpha</h1>
         <div class="version">v0.1.0-alpha</div>
+    </div>
+
+    <div class="system-prompt">
+        <textarea id="sysPrompt" placeholder="System prompt (optional)..."></textarea>
     </div>
 
     <div class="chat-list" id="chatList"></div>
@@ -103,6 +130,7 @@ html
         const API = 'https://jan-agent-backend.onrender.com/chat';
         const list = document.getElementById('chatList');
         const msgInput = document.getElementById('msgInput');
+        const sysPrompt = document.getElementById('sysPrompt');
         const sendBtn = document.getElementById('sendBtn');
         let history = [];
 
@@ -115,6 +143,17 @@ html
             if (!msg) return;
 
             addMsg(msg, 'user');
+            
+            const messages = [];
+            const sys = sysPrompt.value.trim();
+            
+            if (sys) {
+                messages.push({ role: 'system', content: sys });
+            }
+            
+            messages.push(...history);
+            messages.push({ role: 'user', content: msg });
+            
             history.push({ role: 'user', content: msg });
             msgInput.value = '';
             sendBtn.disabled = true;
@@ -123,7 +162,7 @@ html
                 const res = await fetch(API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: history })
+                    body: JSON.stringify({ messages: messages })
                 });
 
                 const data = await res.json();
