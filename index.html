@@ -1,88 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jan Agent (GROQ)</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #1e1e1e; color: #f0f0f0; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-    header { background: #333; padding: 1rem; text-align: center; font-size: 1.5rem; }
-    main { flex: 1; display: flex; flex-direction: column; padding: 1rem; overflow-y: auto; }
-    #chat { flex: 1; overflow-y: auto; margin-bottom: 1rem; }
-    .message { margin: 0.5rem 0; }
-    .user { color: #4caf50; }
-    .agent { color: #03a9f4; }
-    footer { display: flex; padding: 1rem; background: #333; }
-    input[type="text"] { flex: 1; padding: 0.5rem; font-size: 1rem; border: none; border-radius: 5px; }
-    button { padding: 0.5rem 1rem; margin-left: 0.5rem; font-size: 1rem; border: none; border-radius: 5px; background: #4caf50; color: white; cursor: pointer; }
-    button:disabled { background: #777; cursor: not-allowed; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jan Agent</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 700px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        .chat-box {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .user {
+            background: #2563eb;
+            text-align: right;
+        }
+        .ai {
+            background: #374151;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 16px;
+        }
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #1d4ed8; }
+        button:disabled { background: #374151; cursor: not-allowed; }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Jan Agent</h1>
+        <div class="chat-box" id="chatBox"></div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type your message..." />
+            <button id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
 
-<header>Jan Agent (GROQ)</header>
+    <script>
+        const API_URL = 'https://jan-agent-backend.onrender.com/chat';
+        const chatBox = document.getElementById('chatBox');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
 
-<main>
-  <div id="chat"></div>
-</main>
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
 
-<footer>
-  <input type="text" id="message" placeholder="Type your message...">
-  <button id="sendBtn">Send</button>
-</footer>
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
 
-<script>
-const chatBox = document.getElementById('chat');
-const input = document.getElementById('message');
-const sendBtn = document.getElementById('sendBtn');
+            addMessage(message, 'user');
+            messageInput.value = '';
+            sendBtn.disabled = true;
 
-// Your Render backend URL
-const BACKEND_URL = 'https://jan-agent-backend.onrender.com/chat';
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
 
-// Add a message to chat box
-function addMessage(text, sender) {
-  const div = document.createElement('div');
-  div.classList.add('message', sender);
-  div.textContent = `${sender === 'user' ? 'You' : 'Jan Agent'}: ${text}`;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+                const data = await response.json();
+                addMessage(data.response || data.error, 'ai');
+            } catch (error) {
+                addMessage('Error: ' + error.message, 'ai');
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
 
-// Send message to backend
-async function sendMessage() {
-  const msg = input.value.trim();
-  if (!msg) return;
-
-  addMessage(msg, 'user');
-  input.value = '';
-  sendBtn.disabled = true;
-
-  try {
-    const response = await fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg, mode: 'chat' })
-    });
-
-    if (!response.ok) {
-      addMessage(`❌ Error connecting to AI backend (${response.status})`, 'agent');
-    } else {
-      const data = await response.json();
-      addMessage(data.response || '❌ Error: no response', 'agent');
-    }
-  } catch (err) {
-    addMessage(`❌ Error: ${err.message}`, 'agent');
-  } finally {
-    sendBtn.disabled = false;
-    input.focus();
-  }
-}
-
-sendBtn.addEventListener('click', sendMessage);
-input.addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendMessage();
-});
-</script>
-
+        function addMessage(text, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
 </body>
 </html>
