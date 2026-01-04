@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jan Agent</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -37,6 +38,7 @@
             margin-bottom: 15px;
             padding: 12px;
             border-radius: 8px;
+            line-height: 1.6;
         }
         .user {
             background: #2563eb;
@@ -44,6 +46,51 @@
         }
         .ai {
             background: #374151;
+        }
+        .ai h1, .ai h2, .ai h3, .ai h4, .ai h5, .ai h6 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+        .ai h1 { font-size: 1.5rem; }
+        .ai h2 { font-size: 1.3rem; }
+        .ai h3 { font-size: 1.1rem; }
+        .ai p { margin-bottom: 8px; }
+        .ai ul, .ai ol { margin-left: 20px; margin-bottom: 8px; }
+        .ai code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .ai pre {
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 8px;
+        }
+        .ai pre code {
+            background: none;
+            padding: 0;
+        }
+        .ai blockquote {
+            border-left: 3px solid #2563eb;
+            padding-left: 12px;
+            margin: 8px 0;
+            color: #9ca3af;
+        }
+        .ai table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .ai th, .ai td {
+            border: 1px solid #374151;
+            padding: 8px;
+            text-align: left;
+        }
+        .ai th {
+            background: #1a1a1a;
         }
         .input-area {
             display: flex;
@@ -111,7 +158,7 @@
 
                 const data = await response.json();
                 const aiResponse = data.response || data.error;
-                addMessage(aiResponse, 'ai');
+                addMessage(aiResponse, 'ai', true);
                 conversationHistory.push({ role: 'assistant', content: aiResponse });
             } catch (error) {
                 addMessage('Error: ' + error.message, 'ai');
@@ -120,10 +167,16 @@
             }
         }
 
-        function addMessage(text, type) {
+        function addMessage(text, type, isMarkdown = false) {
             const div = document.createElement('div');
             div.className = `message ${type}`;
-            div.textContent = text;
+            
+            if (isMarkdown && type === 'ai') {
+                div.innerHTML = marked.parse(text);
+            } else {
+                div.textContent = text;
+            }
+            
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
