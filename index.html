@@ -7,130 +7,216 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body.light {
+            background: #fff;
+            color: #000;
+        }
+        
+        body.dark {
+            background: #000;
+            color: #fff;
+        }
+        
         body {
             font-family: Arial, sans-serif;
-            background: #f5f5f5;
             padding: 20px;
+            max-width: 700px;
+            margin: 0 auto;
         }
+        
         .header {
             text-align: center;
             margin-bottom: 20px;
         }
+        
         .logo {
             width: 80px;
             height: 80px;
             margin: 0 auto 10px;
         }
+        
         h1 {
-            font-size: 24px;
-            color: #333;
+            font-size: 28px;
         }
+        
         .version {
             font-size: 12px;
-            color: #666;
+            color: gray;
         }
-        .chat-list {
-            background: white;
-            border: 1px solid #ddd;
-            height: 400px;
-            overflow-y: scroll;
-            padding: 15px;
+        
+        .theme-btn {
+            text-align: center;
             margin-bottom: 15px;
         }
+        
+        button.theme {
+            background: none;
+            border: 1px solid gray;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        
+        body.light button.theme {
+            color: #000;
+        }
+        
+        body.dark button.theme {
+            color: #fff;
+        }
+        
+        .chat {
+            border: 1px solid gray;
+            height: 400px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        body.light .chat {
+            background: #fafafa;
+        }
+        
+        body.dark .chat {
+            background: #111;
+        }
+        
         .msg {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             padding: 8px;
-            border-radius: 5px;
         }
-        .user { background: #e3f2fd; text-align: right; }
-        .ai { background: #f5f5f5; }
-        .ai h1, .ai h2, .ai h3 { margin: 8px 0 4px 0; font-size: 1.1em; }
+        
+        body.light .user {
+            background: #e0e0e0;
+            text-align: right;
+        }
+        
+        body.dark .user {
+            background: #222;
+            text-align: right;
+        }
+        
+        body.light .ai {
+            background: #f5f5f5;
+        }
+        
+        body.dark .ai {
+            background: #1a1a1a;
+        }
+        
         .ai code {
-            background: #eee;
+            background: #ddd;
             padding: 2px 4px;
-            border-radius: 3px;
-            font-family: monospace;
         }
+        
+        body.dark .ai code {
+            background: #333;
+        }
+        
         .ai pre {
-            background: #eee;
+            background: #ddd;
             padding: 8px;
-            border-radius: 3px;
             overflow-x: auto;
         }
-        .ai ul, .ai ol { margin-left: 20px; }
-        .input-box {
+        
+        body.dark .ai pre {
+            background: #333;
+        }
+        
+        .bottom {
             display: flex;
             gap: 10px;
         }
-        input[type="text"] {
+        
+        input {
             flex: 1;
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
+            border: 1px solid gray;
             font-size: 14px;
         }
-        button {
+        
+        body.light input {
+            background: #fff;
+            color: #000;
+        }
+        
+        body.dark input {
+            background: #111;
+            color: #fff;
+        }
+        
+        button.send {
             padding: 10px 20px;
-            background: #2196f3;
-            color: white;
+            background: #333;
+            color: #fff;
             border: none;
-            border-radius: 3px;
             cursor: pointer;
-            font-size: 14px;
         }
-        button:hover { background: #1976d2; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        button.send:disabled {
+            background: #666;
+        }
+        
         .footer {
             text-align: center;
-            font-size: 11px;
-            color: #999;
+            font-size: 10px;
+            color: gray;
             margin-top: 10px;
         }
     </style>
 </head>
-<body>
+<body class="light">
     <div class="header">
-<svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-        <linearGradient id="jGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#d0d0d0;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#3a3a3a;stop-opacity:1" />
-        </linearGradient>
-    </defs>
-    <text x="50" y="75" font-size="70" font-weight="bold" text-anchor="middle" fill="url(#jGrad)" font-family="Arial, sans-serif">J</text>
-</svg>
-        <h1>Jan Agent (Alpha)</h1>
-        <div class="version">v0.1.1-alpha</div>
+        <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <text x="50" y="75" font-size="70" font-weight="bold" text-anchor="middle" fill="#555" font-family="Arial">J</text>
+        </svg>
+        <h1>Jan Agent</h1>
+        <div class="version">v0.2.0-alpha</div>
     </div>
 
-    <div class="chat-list" id="chatList"></div>
-
-    <div class="input-box">
-        <input type="text" id="msgInput" placeholder="Type message..." />
-        <button id="sendBtn" onclick="send()">Send</button>
+    <div class="theme-btn">
+        <button class="theme" onclick="toggleTheme()">Switch Theme</button>
     </div>
 
-    <div class="footer">© Jan 2026. All Rights Reserved.</div>
+    <div class="chat" id="chat"></div>
+
+    <div class="bottom">
+        <input type="text" id="input" placeholder="Type message..." />
+        <button class="send" id="btn" onclick="send()">Send</button>
+    </div>
+
+    <div class="footer">© Jan 2026. All rights reserved.</div>
 
     <script>
         const API = 'https://jan-agent-backend.onrender.com/chat';
-        const list = document.getElementById('chatList');
-        const msgInput = document.getElementById('msgInput');
-        const sendBtn = document.getElementById('sendBtn');
+        const chat = document.getElementById('chat');
+        const input = document.getElementById('input');
+        const btn = document.getElementById('btn');
         let history = [];
 
-        msgInput.addEventListener('keypress', (e) => {
+        const theme = localStorage.getItem('theme') || 'light';
+        document.body.className = theme;
+
+        function toggleTheme() {
+            const current = document.body.className;
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            document.body.className = newTheme;
+            localStorage.setItem('theme', newTheme);
+        }
+
+        input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') send();
         });
 
         async function send() {
-            const msg = msgInput.value.trim();
+            const msg = input.value.trim();
             if (!msg) return;
 
             addMsg(msg, 'user');
             history.push({ role: 'user', content: msg });
-            msgInput.value = '';
-            sendBtn.disabled = true;
+            input.value = '';
+            btn.disabled = true;
 
             try {
                 const res = await fetch(API, {
@@ -140,19 +226,31 @@
                 });
 
                 const data = await res.json();
+                
+                if (!res.ok) {
+                    if (res.status === 429) {
+                        addMsg('Too many requests. Wait a moment.', 'ai');
+                    } else if (res.status >= 500) {
+                        addMsg('Server error. Try again later.', 'ai');
+                    } else {
+                        addMsg('Error: ' + (data.error || 'Something went wrong'), 'ai');
+                    }
+                    return;
+                }
+                
                 const reply = data.response || data.error;
                 addMsg(reply, 'ai', true);
                 history.push({ role: 'assistant', content: reply });
             } catch (err) {
-                addMsg('Error: ' + err.message, 'ai');
+                addMsg('Network error: ' + err.message, 'ai');
             } finally {
-                sendBtn.disabled = false;
+                btn.disabled = false;
             }
         }
 
         function addMsg(text, type, isMd = false) {
             const div = document.createElement('div');
-            div.className = `msg ${type}`;
+            div.className = 'msg ' + type;
             
             if (isMd && type === 'ai') {
                 div.innerHTML = marked.parse(text);
@@ -160,8 +258,8 @@
                 div.textContent = text;
             }
             
-            list.appendChild(div);
-            list.scrollTop = list.scrollHeight;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
         }
     </script>
 </body>
